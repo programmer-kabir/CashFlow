@@ -11,11 +11,10 @@ import {
 } from 'lucide-react';
 
 const LoginPage = () => {
-  const { login, signup, loginWithDemo, demoPreset } = useAuth();
+  const { login, loginWithDemo, demoPreset } = useAuth();
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -31,28 +30,10 @@ const LoginPage = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      if (isSignUpMode) {
-        await signup(emailOrPhone, password, emailOrPhone.split('@')[0]);
-      } else {
-        // If demo credentials match, run loginWithDemo
-        if (emailOrPhone === demoPreset.phone || emailOrPhone === demoPreset.email) {
-          await loginWithDemo();
-        } else {
-          try {
-            await login(emailOrPhone, password);
-          } catch (loginErr) {
-            // Auto signup if account doesn't exist
-            if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
-              await signup(emailOrPhone, password, 'User');
-            } else {
-              throw loginErr;
-            }
-          }
-        }
-      }
+      await login(emailOrPhone, password);
     } catch (err) {
       console.error('Auth error:', err);
-      setErrorMsg(err.message || 'Authentication error. You can use 1-Click Demo.');
+      setErrorMsg(err.message || 'ভুল ইমেইল অথবা পাসওয়ার্ড! অননুমোদিত ইউজার প্রবেশ নিষেধ।');
     } finally {
       setLoading(false);
     }
@@ -65,6 +46,7 @@ const LoginPage = () => {
       await loginWithDemo();
     } catch (err) {
       console.error('Demo error:', err);
+      setErrorMsg(err.message || 'লগইন করতে সমস্যা হয়েছে।');
     } finally {
       setLoading(false);
     }
@@ -95,18 +77,17 @@ const LoginPage = () => {
         <div className="border-b border-slate-200 dark:border-slate-800/80 pb-4">
           <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-base mb-1">
             <ShieldCheck className="w-5 h-5" />
-            <span>{isSignUpMode ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'একাউন্টে লগইন করুন'}</span>
+            <span>ব্যক্তিগত একাউন্টে লগইন করুন</span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {isSignUpMode 
-              ? 'আপনার মোবাইল বা ইমেইল দিয়ে একটি সুরক্ষিত ক্যাশফ্লো অ্যাকাউন্ট খুলুন।' 
-              : 'আপনার মোবাইল নাম্বার অথবা ইমেইল দিয়ে সহজে প্রবেশ করুন।'}
+            কবির হোসেন (Kabir Hossen)-এর সুরক্ষিত ব্যক্তিগত ক্যাশ খাতা
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-xs text-rose-600 dark:text-rose-400">
-            {errorMsg}
+          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
+            <Lock className="w-4 h-4 shrink-0 text-rose-500" />
+            <span>{errorMsg}</span>
           </div>
         )}
 
@@ -121,7 +102,7 @@ const LoginPage = () => {
               <input
                 type="text"
                 required
-                placeholder="01763685616 অথবা heykabirr@gmail.com"
+                placeholder="01763685616 অথবা heykabirr01@gmail.com"
                 value={emailOrPhone}
                 onChange={(e) => setEmailOrPhone(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
@@ -132,7 +113,7 @@ const LoginPage = () => {
           {/* Password */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              পাসওয়ার্ড
+              ব্যক্তিগত পাসওয়ার্ড
             </label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
@@ -154,23 +135,20 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Login / Signup Submit Button */}
+          {/* Login Submit Button */}
           <button
             type="submit"
             disabled={loading}
             className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
-            <span>{loading ? 'প্রসেসিং...' : isSignUpMode ? 'সাইন আপ করুন' : 'লগইন করুন'}</span>
+            <span>{loading ? 'যাচাই করা হচ্ছে...' : 'ব্যক্তিগত একাউন্টে প্রবেশ করুন'}</span>
             <ArrowRight className="w-4 h-4 stroke-[2.5]" />
           </button>
 
-          <button
-            type="button"
-            onClick={() => setIsSignUpMode(prev => !prev)}
-            className="text-xs text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 text-center w-full transition-colors pt-1 cursor-pointer"
-          >
-            {isSignUpMode ? 'ইতিমধ্যে একাউন্ট আছে? লগইন করুন' : 'নতুন একাউন্ট খুলতে চান? সাইন আপ করুন'}
-          </button>
+          <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] text-slate-500 dark:text-slate-400">
+            <Lock className="w-3.5 h-3.5 text-emerald-500" />
+            <span>সিঙ্গেল-ইউজার মোড সক্রিয় • অননুমোদিত এক্সেস ব্লকড</span>
+          </div>
         </form>
 
         {/* 1-Click Fill Preset Box */}
@@ -183,9 +161,9 @@ const LoginPage = () => {
               <div>
                 <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
                   <span>Kabir Hossen</span>
-                  <span className="text-amber-500 text-[10px]">✨</span>
+                  <span className="text-amber-500 text-[10px]">👑</span>
                 </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">01763685616</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">heykabirr01@gmail.com</p>
               </div>
             </div>
 

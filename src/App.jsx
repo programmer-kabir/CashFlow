@@ -26,22 +26,25 @@ function App() {
   const [quickEntryOpen, setQuickEntryOpen] = useState(false);
   const [quickEntryType, setQuickEntryType] = useState('cash_out');
 
-  // PIN & Biometric Lock State
-  const [isPinLocked, setIsPinLocked] = useState(false);
+  // PIN & Biometric Lock State (দ্বি-স্তরীয় নিরাপত্তা: ইমেইল/পাসওয়ার্ড + ৪-ডিজিট পিন লক)
+  const [isPinLocked, setIsPinLocked] = useState(true);
 
+  // When user logs in or reloads, ensure PIN lock is active
   useEffect(() => {
-    const savedPin = localStorage.getItem('cashflow_pin');
-    if (savedPin) {
+    // If no PIN is configured in localStorage, initialize with default '1212'
+    if (!localStorage.getItem('cashflow_pin')) {
+      localStorage.setItem('cashflow_pin', '1212');
+    }
+    if (currentUser) {
       setIsPinLocked(true);
     }
-  }, []);
+  }, [currentUser]);
 
   // Auto-lock when tab is hidden or backgrounded
   useEffect(() => {
     const handleVisibilityChange = () => {
-      const savedPin = localStorage.getItem('cashflow_pin');
       const autoLock = localStorage.getItem('cashflow_autolock') !== 'false';
-      if (document.hidden && savedPin && autoLock) {
+      if (document.hidden && autoLock) {
         setIsPinLocked(true);
       }
     };
@@ -96,6 +99,7 @@ function App() {
         <Header
           setMobileOpen={setMobileSidebarOpen}
           onOpenQuickEntry={() => handleOpenQuickEntry('cash_out')}
+          onLockApp={() => setIsPinLocked(true)}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full">

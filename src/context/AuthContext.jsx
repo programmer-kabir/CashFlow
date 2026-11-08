@@ -19,12 +19,12 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Demo user preset
+  // Personal Owner Preset (একক ব্যক্তিগত ইউজার)
   const demoPreset = {
     name: 'Kabir Hossen',
-    email: 'heykabirr@gmail.com',
+    email: 'heykabirr01@gmail.com',
     phone: '01763685616',
-    password: 'password123'
+    password: 'S$kabir121@#.'
   };
 
   const setLocalSession = (userObj) => {
@@ -57,9 +57,9 @@ export const AuthProvider = ({ children }) => {
               await updateProfile(anonCred.user, { displayName: demoPreset.name });
               return anonCred.user;
             } catch (anonErr) {
-              console.warn('Firebase Auth restricted, using local session for demo user');
+              console.warn('Firebase Auth restricted, using local session for owner user');
               const localUser = {
-                uid: 'kabir_hossen_demo',
+                uid: 'kabir_hossen_personal',
                 displayName: demoPreset.name,
                 email: demoPreset.email,
                 phone: demoPreset.phone
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           // Fallback to local session
           const localUser = {
-            uid: 'kabir_hossen_demo',
+            uid: 'kabir_hossen_personal',
             displayName: demoPreset.name,
             email: demoPreset.email,
             phone: demoPreset.phone
@@ -81,9 +81,9 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.warn('Using local fallback session for demo user:', error);
+      console.warn('Using local fallback session for owner user:', error);
       const localUser = {
-        uid: 'kabir_hossen_demo',
+        uid: 'kabir_hossen_personal',
         displayName: demoPreset.name,
         email: demoPreset.email,
         phone: demoPreset.phone
@@ -94,20 +94,41 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (emailOrPhone, password) => {
-    let email = emailOrPhone;
-    if (!emailOrPhone.includes('@')) {
-      email = `${emailOrPhone.replace(/[^0-9]/g, '')}@cashflow.local`;
+    const inputVal = (emailOrPhone || '').trim().toLowerCase();
+    const isOwner = inputVal === demoPreset.email.toLowerCase() || inputVal === demoPreset.phone;
+
+    // কঠোর একক ইউজার পরীক্ষা: শুধুমাত্র অনার লগইন করতে পারবেন
+    if (!isOwner || password !== demoPreset.password) {
+      throw new Error('ভুল ইমেইল অথবা পাসওয়ার্ড! এটি একটি ব্যক্তিগত খাতা—অননুমোদিত প্রবেশ সম্পূর্ণ নিষেধ।');
     }
+
     try {
-      return await signInWithEmailAndPassword(auth, email, password);
+      return await signInWithEmailAndPassword(auth, demoPreset.email, password);
     } catch (err) {
-      // If Firebase Auth is restricted or offline, create a local session
-      if (err.code === 'auth/admin-restricted-operation' || err.code === 'auth/network-request-failed' || err.code === 'auth/user-not-found') {
+      // If owner not created in Firebase yet, auto-create this owner once
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, demoPreset.email, password);
+          await updateProfile(cred.user, { displayName: demoPreset.name });
+          return cred.user;
+        } catch (createErr) {
+          const localUser = {
+            uid: 'kabir_hossen_personal',
+            displayName: demoPreset.name,
+            email: demoPreset.email,
+            phone: demoPreset.phone
+          };
+          setLocalSession(localUser);
+          return localUser;
+        }
+      }
+      // If Firebase Auth is restricted or offline, create the local owner session
+      if (err.code === 'auth/admin-restricted-operation' || err.code === 'auth/network-request-failed') {
         const localUser = {
-          uid: 'user_' + emailOrPhone.replace(/[^a-zA-Z0-9]/g, '_'),
-          displayName: emailOrPhone.split('@')[0],
-          email: email,
-          phone: emailOrPhone
+          uid: 'kabir_hossen_personal',
+          displayName: demoPreset.name,
+          email: demoPreset.email,
+          phone: demoPreset.phone
         };
         setLocalSession(localUser);
         return localUser;
@@ -116,28 +137,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (emailOrPhone, password, displayName = 'User') => {
-    let email = emailOrPhone;
-    if (!emailOrPhone.includes('@')) {
-      email = `${emailOrPhone.replace(/[^0-9]/g, '')}@cashflow.local`;
-    }
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName });
-      return cred.user;
-    } catch (err) {
-      if (err.code === 'auth/admin-restricted-operation' || err.code === 'auth/network-request-failed') {
-        const localUser = {
-          uid: 'user_' + emailOrPhone.replace(/[^a-zA-Z0-9]/g, '_'),
-          displayName,
-          email: email,
-          phone: emailOrPhone
-        };
-        setLocalSession(localUser);
-        return localUser;
-      }
-      throw err;
-    }
+  const signup = async () => {
+    throw new Error('নতুন অ্যাকাউন্ট তৈরি বন্ধ রয়েছে। এটি একটি ব্যক্তিগত সিঙ্গেল-ইউজার অ্যাপ।');
   };
 
   const logout = async () => {

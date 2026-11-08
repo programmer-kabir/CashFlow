@@ -86,7 +86,7 @@ const SettingsPage = () => {
   };
 
   const displayName = userProfile?.displayName || currentUser?.displayName || 'Kabir Hossen';
-  const email = userProfile?.email || currentUser?.email || 'heykabirr@gmail.com';
+  const email = userProfile?.email || currentUser?.email || 'heykabirr01@gmail.com';
   const phone = userProfile?.phone || '01763685616';
 
   const [toastMessage, setToastMessage] = useState(null);

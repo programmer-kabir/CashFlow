@@ -12,16 +12,33 @@ import {
   Wallet,
   Volume2,
   VolumeX,
-  Download
+  Download,
+  Lock
 } from 'lucide-react';
 import AnimatedNumber from './AnimatedNumber';
 
-const Header = ({ setMobileOpen, onOpenQuickEntry }) => {
+const Header = ({ setMobileOpen, onOpenQuickEntry, onLockApp }) => {
   const { stats, theme, toggleTheme, soundEnabled, toggleSound } = useCashFlow();
   const { logout } = useAuth();
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [canInstall, setCanInstall] = useState(false);
+
+  const handleLockClick = () => {
+    const savedPin = localStorage.getItem('cashflow_pin');
+    const bioEnabled = localStorage.getItem('cashflow_biometric_enabled') === 'true';
+    if (!savedPin && !bioEnabled) {
+      const newPin = prompt('অ্যাপ লক করার জন্য ৪-ডিজিটের একটি পিন কোড লিখুন:');
+      if (newPin && newPin.length === 4 && /^\d+$/.test(newPin)) {
+        localStorage.setItem('cashflow_pin', newPin);
+        onLockApp?.();
+      } else if (newPin) {
+        alert('পিন কোডটি ঠিক ৪টি সংখ্যার হতে হবে।');
+      }
+      return;
+    }
+    onLockApp?.();
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -118,6 +135,15 @@ const Header = ({ setMobileOpen, onOpenQuickEntry }) => {
           ) : (
             <VolumeX className="w-4 h-4 text-slate-400" />
           )}
+        </button>
+
+        {/* Lock Screen Instant Button */}
+        <button
+          onClick={handleLockClick}
+          title="অ্যাপ এখনই লক করুন (Lock Screen)"
+          className="p-2 sm:p-2.5 rounded-2xl text-slate-500 hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400 bg-slate-100/80 hover:bg-emerald-50 dark:bg-white/[0.04] dark:hover:bg-emerald-500/10 border border-slate-200 dark:border-white/[0.07] transition-all duration-200 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+        >
+          <Lock className="w-4 h-4" />
         </button>
 
         {/* Theme Toggle Button */}
