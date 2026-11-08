@@ -7,6 +7,7 @@ import {
   PieChart, 
   Trash2 
 } from 'lucide-react';
+import AnimatedNumber from '../components/AnimatedNumber';
 
 const CashOutPage = ({ onOpenQuickEntry }) => {
   const { transactions, stats, deleteTransaction } = useCashFlow();
@@ -63,19 +64,19 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
             <ArrowUpRight className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold font-heading text-white">Cash Out & Expenses</h2>
-            <p className="text-xs sm:text-sm text-slate-400">Track where your money was spent with exact category breakdowns.</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">Cash Out & Expenses</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">দৈনন্দিন খরচ, বিল, সিগারেট, পার্টি ও লোনের বহির্গমন ট্র্যাকার</p>
           </div>
         </div>
 
         <button
           onClick={() => onOpenQuickEntry('cash_out')}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm shadow-lg shadow-rose-600/25 transition-all self-start sm:self-auto"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-rose-600/25 transition-all self-start sm:self-auto cursor-pointer hover:-translate-y-0.5"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>- Record Cash Out</span>
@@ -84,53 +85,63 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
 
       {/* Metric Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-[#111827] border border-slate-800">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">TOTAL CASH OUT</p>
-          <p className="text-2xl font-bold font-mono text-rose-400 mt-1">৳{stats.totalCashOut.toLocaleString()}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">{cashOutList.length} total entries</p>
+        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.07] hover:border-rose-300 dark:hover:border-rose-500/30 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 card-interactive">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TOTAL CASH OUT</p>
+          <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1.5 tracking-tight">
+            <AnimatedNumber value={stats.totalCashOut} prefix="৳" />
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">{cashOutList.length} total entries</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#111827] border border-slate-800">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">REAL LIVING EXPENSES</p>
-          <p className="text-2xl font-bold font-mono text-rose-400 mt-1">৳{stats.realExpenses.toLocaleString()}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Food, Cigarette, Party, Bills...</p>
+        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.07] hover:border-rose-300 dark:hover:border-rose-500/30 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 card-interactive">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">REAL LIVING EXPENSES</p>
+          <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1.5 tracking-tight">
+            <AnimatedNumber value={stats.realExpenses} prefix="৳" />
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Food, Cigarette, Party, Bills...</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#111827] border border-slate-800">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">TODAY'S OUT</p>
-          <p className="text-2xl font-bold font-mono text-rose-400 mt-1">৳{stats.todayOut.toLocaleString()}</p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Spent today</p>
+        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.07] hover:border-rose-300 dark:hover:border-rose-500/30 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 card-interactive">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TODAY'S OUT</p>
+          <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1.5 tracking-tight">
+            <AnimatedNumber value={stats.todayOut} prefix="৳" />
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Spent today</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-indigo-950/20 border border-indigo-900/40">
-          <p className="text-xs font-semibold text-indigo-400/90 uppercase tracking-wider">LOANS GIVEN / REPAID</p>
-          <p className="text-2xl font-bold font-mono text-indigo-400 mt-1">
-            ৳{(stats.loansGiven + stats.loanRepaymentsPaid).toLocaleString()}
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Principal movements</p>
+        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-white/[0.03] border border-indigo-200/80 dark:border-indigo-900/40 hover:border-indigo-400 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 card-interactive">
+          <p className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400/90 uppercase tracking-wider">LOANS GIVEN / REPAID</p>
+          <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-1.5 tracking-tight">
+            <AnimatedNumber value={stats.loansGiven + stats.loanRepaymentsPaid} prefix="৳" />
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Principal movements</p>
         </div>
       </div>
 
       {/* Category Breakdown Widget */}
       {categoryBreakdown.length > 0 && (
-        <div className="p-5 rounded-3xl bg-[#111827] border border-slate-800">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <PieChart className="w-4 h-4 text-rose-400" />
-              Where Did Your Money Go? (Category Breakdown)
+        <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0d1424] border border-slate-200/80 dark:border-white/[0.07] shadow-sm dark:shadow-xl transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                <PieChart className="w-4 h-4" />
+              </div>
+              <span>Where Did Your Money Go? (Category Breakdown)</span>
             </h4>
-            <span className="text-xs text-slate-400">Total: ৳{stats.totalCashOut.toLocaleString()}</span>
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+              Total: ৳{stats.totalCashOut.toLocaleString()}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {categoryBreakdown.map((item, i) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80">
-                <div className="flex items-center justify-between text-xs font-medium mb-1.5">
-                  <span className="text-slate-300 truncate">{item.name}</span>
-                  <span className="font-mono text-rose-400 font-bold">৳{item.amount.toLocaleString()} ({item.pct}%)</span>
+              <div key={i} className="p-3.5 rounded-2xl bg-slate-50/70 hover:bg-white dark:bg-white/[0.02] dark:hover:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.05] transition-all">
+                <div className="flex items-center justify-between text-xs font-semibold mb-2">
+                  <span className="text-slate-800 dark:text-slate-200 truncate">{item.name}</span>
+                  <span className="font-mono text-rose-600 dark:text-rose-400 font-bold">৳{item.amount.toLocaleString()} ({item.pct}%)</span>
                 </div>
-                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${item.pct}%` }} />
+                <div className="w-full h-2 bg-slate-100 dark:bg-white/[0.06] rounded-full overflow-hidden p-0.5">
+                  <div className="h-full bg-gradient-to-r from-rose-500 to-pink-500 rounded-full transition-all duration-500 shadow-xs" style={{ width: `${item.pct}%` }} />
                 </div>
               </div>
             ))}
@@ -141,17 +152,17 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
       {/* Search & Time Filter */}
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
           <input
             type="text"
             placeholder="Search note, category, person, amount..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-800 rounded-2xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-rose-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.07] rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 shadow-2xs transition-all"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-2xl border border-slate-800 self-stretch sm:self-auto shrink-0">
+        <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-white/[0.04] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/[0.07] self-stretch sm:self-auto shrink-0 shadow-2xs">
           {[
             { id: 'all', label: 'All Time' },
             { id: 'today', label: 'Today' },
@@ -161,8 +172,10 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
             <button
               key={f.id}
               onClick={() => setTimeFilter(f.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                timeFilter === f.id ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                timeFilter === f.id 
+                  ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-xs' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {f.label}
@@ -174,10 +187,12 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
       {/* Cash Out List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="p-12 text-center border-2 border-dashed border-slate-800 rounded-3xl bg-slate-900/40">
-            <ArrowUpRight className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <p className="text-sm font-semibold text-slate-300">No expense records found</p>
-            <p className="text-xs text-slate-500 mt-1">You have no recorded expenses matching this filter.</p>
+          <div className="p-16 text-center border-2 border-dashed border-slate-200 dark:border-white/[0.08] rounded-3xl bg-white dark:bg-white/[0.02] shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4">
+              <ArrowUpRight className="w-8 h-8" />
+            </div>
+            <p className="text-base font-bold text-slate-800 dark:text-slate-200">No expense records found</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">You have no recorded expenses matching this filter.</p>
           </div>
         ) : (
           filtered.map(tx => {
@@ -188,22 +203,22 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
             return (
               <div
                 key={tx.id}
-                className="p-4 rounded-2xl bg-[#111827]/80 hover:bg-[#131c2e] border border-slate-800 flex items-center justify-between gap-4 transition-colors group"
+                className="p-4 sm:p-4.5 rounded-2xl bg-white dark:bg-[#0d1424] hover:bg-slate-50/80 dark:hover:bg-[#111c33] border border-slate-200/80 dark:border-white/[0.07] hover:border-slate-300 dark:hover:border-white/[0.12] flex items-center justify-between gap-4 transition-all duration-200 group shadow-2xs hover:shadow-xs"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
-                    <ArrowUpRight className="w-6 h-6" />
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-2xs">
+                    <ArrowUpRight className="w-6 h-6 stroke-[2.5]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm sm:text-base text-white">{tx.category || 'Expense'}</span>
+                      <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{tx.category || 'Expense'}</span>
                       {tx.personName && (
-                        <span className="px-2 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300 border border-slate-700">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-white/[0.08] text-slate-700 dark:text-slate-300 font-semibold border border-slate-200 dark:border-white/[0.08]">
                           {tx.personName}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-400 dark:text-slate-400 mt-1 font-medium">
                       {formattedDate} • {formattedTime} {tx.note ? `— ${tx.note}` : ''}
                     </p>
                   </div>
@@ -211,17 +226,17 @@ const CashOutPage = ({ onOpenQuickEntry }) => {
 
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <span className="font-mono font-bold text-base sm:text-lg text-rose-400">
+                    <span className="font-mono font-black text-base sm:text-lg text-rose-600 dark:text-rose-400 tracking-tight">
                       -৳{Number(tx.amount).toLocaleString()}
                     </span>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">CASH</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-400 uppercase tracking-wider font-semibold">CASH</p>
                   </div>
 
                   <button
                     onClick={() => {
                       if (window.confirm('Delete this expense record?')) deleteTransaction(tx.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

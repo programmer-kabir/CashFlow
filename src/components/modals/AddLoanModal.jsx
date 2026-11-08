@@ -11,6 +11,7 @@ import {
   FileText 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import MathAmountInput from '../MathAmountInput';
 
 const AddLoanModal = ({ isOpen, onClose, initialType = 'lent' }) => {
   const { addLoan } = useCashFlow();
@@ -72,21 +73,21 @@ const AddLoanModal = ({ isOpen, onClose, initialType = 'lent' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-[#111827] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="w-full max-w-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-              isLent ? 'bg-rose-500/15 text-rose-400' : 'bg-emerald-500/15 text-emerald-400'
+              isLent ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
             }`}>
               <Handshake className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-heading font-bold text-lg text-white">
+              <h3 className="font-heading font-bold text-lg text-slate-900 dark:text-white">
                 {isLent ? 'কাউকে লোন দেওয়া' : 'কারো থেকে লোন নেওয়া'}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {isLent 
                   ? 'আপনার পকেট থেকে টাকা দিলেন (ক্যাশ থেকে বিয়োগ হবে)' 
                   : 'আপনি ধার নিয়ে পকেটে আনলেন (ক্যাশে যোগ হবে)'}
@@ -95,36 +96,36 @@ const AddLoanModal = ({ isOpen, onClose, initialType = 'lent' }) => {
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* 2-Way Tab Switcher */}
-        <div className="grid grid-cols-2 gap-2 p-3 bg-slate-950/60 border-b border-slate-800 text-xs font-semibold">
+        <div className="grid grid-cols-2 gap-2 p-3 bg-slate-100/70 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold">
           <button
             type="button"
             onClick={() => setLoanType('lent')}
-            className={`py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+            className={`py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
               isLent 
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-xs' 
-                : 'text-slate-400 hover:bg-slate-900'
+                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-xs font-bold' 
+                : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900'
             }`}
           >
-            <ArrowUpRight className="w-4 h-4 text-rose-400" />
+            <ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             <span>কাউকে লোন দিলাম (- Cash Out)</span>
           </button>
           <button
             type="button"
             onClick={() => setLoanType('borrowed')}
-            className={`py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+            className={`py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
               !isLent 
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-xs' 
-                : 'text-slate-400 hover:bg-slate-900'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40 shadow-xs font-bold' 
+                : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900'
             }`}
           >
-            <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
+            <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>লোন নিয়েছি (+ Cash In)</span>
           </button>
         </div>
@@ -132,76 +133,73 @@ const AddLoanModal = ({ isOpen, onClose, initialType = 'lent' }) => {
         {/* Helper Badge Banner */}
         <div className={`px-5 py-2.5 text-xs font-medium border-b flex items-center justify-between ${
           isLent 
-            ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' 
-            : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+            ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-300' 
+            : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
         }`}>
           <span>
             {isLent 
               ? '👉 টাকা অন্যকে দিয়েছেন: এটি দেনাদার থেকে পরে পাওনা হিসেবে জমা থাকবে।' 
               : '👉 টাকা ধার এনেছেন: এটি পরবর্তীতে পরিশোধ করার দেনা হিসেবে জমা থাকবে।'}
           </span>
-          <span className="font-bold font-mono px-2 py-0.5 rounded-md bg-slate-950/60 text-[11px]">
+          <span className="font-bold font-mono px-2 py-0.5 rounded-md bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-[11px]">
             {isLent ? '- Cash Out' : '+ Cash In'}
           </span>
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Amount Input */}
+          {/* Amount Input with In-Line Calculator */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-              লোনের পরিমাণ (টাকা / BDT) <span className="text-rose-400">*</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">৳</span>
-              <input
-                type="number"
-                step="any"
-                required
-                autoFocus
-                placeholder="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 bg-slate-950 border rounded-2xl text-2xl font-bold font-mono text-white placeholder-slate-600 focus:outline-hidden ${
-                  isLent 
-                    ? 'border-slate-800 focus:border-rose-500' 
-                    : 'border-slate-800 focus:border-emerald-500'
-                }`}
-              />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                লোনের পরিমাণ (টাকা / BDT) <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-medium">
+                (যোগ, বিয়োগ, গুণ, ভাগ হিসাব করতে পারেন)
+              </span>
             </div>
+
+            <MathAmountInput
+              value={amount}
+              onChange={(val) => setAmount(val)}
+              placeholder="0"
+              autoFocus
+              required
+              accentColor={isLent ? 'rose' : 'emerald'}
+            />
           </div>
 
           {/* Person Name & Phone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                {isLent ? 'যাকে লোন দিয়েছেন (নাম)' : 'যার থেকে লোন নিয়েছেন (নাম)'} <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                {isLent ? 'যাকে লোন দিয়েছেন (নাম)' : 'যার থেকে লোন নিয়েছেন (নাম)'} <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
                 <input
                   type="text"
                   required
                   placeholder="যেমন: আবু বকর, কবির"
                   value={personName}
                   onChange={(e) => setPersonName(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-hidden focus:border-indigo-500"
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-hidden focus:border-indigo-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 ফোন নম্বর (ঐচ্ছিক)
               </label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="017xxxxxxxx"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-hidden focus:border-indigo-500"
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-hidden focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -210,32 +208,32 @@ const AddLoanModal = ({ isOpen, onClose, initialType = 'lent' }) => {
           {/* Return Due Date & Note */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 টাকা ফেরত দেওয়ার সম্ভাব্য তারিখ
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:border-indigo-500"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 লোনের কারণ / নোট
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="যেমন: বাইক পার্টস, জরুরী ওষুধ"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-hidden focus:border-indigo-500"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-hidden focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -246,14 +244,14 @@ const AddLoanModal = ({ isOpen, onClose, initialType = 'lent' }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !amount || !personName}
-              className={`px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 ${
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer ${
                 isLent 
                   ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/25' 
                   : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25'

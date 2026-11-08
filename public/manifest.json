@@ -1,0 +1,19 @@
+{
+  "name": "CashFlow - Personal Cash & Wallet Manager",
+  "short_name": "CashFlow",
+  "description": "Ultra-fast modern personal finance, multi-wallet and cash flow manager",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

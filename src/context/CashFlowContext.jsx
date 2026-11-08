@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase/config';
 import { useAuth } from './AuthContext';
+import { sounds } from '../utils/soundEffects';
 import { 
   collection, 
   doc, 
@@ -8,14 +9,77 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc, 
-  setDoc,
-  serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
 
 const CashFlowContext = createContext();
 
 export const useCashFlow = () => useContext(CashFlowContext);
+
+export const DEFAULT_WALLETS = [
+  { id: 'cash', name: 'Cash in Hand', icon: 'Banknote', color: '#10b981', badge: 'ক্যাশ', bg: 'emerald' },
+  { id: 'bkash', name: 'bKash Wallet', icon: 'Smartphone', color: '#e2136e', badge: 'বিকাশ', bg: 'pink' },
+  { id: 'nagad', name: 'Nagad Wallet', icon: 'Zap', color: '#f97316', badge: 'নগদ', bg: 'orange' },
+  { id: 'bank', name: 'Bank Account', icon: 'Building2', color: '#0284c7', badge: 'ব্যাংক', bg: 'sky' },
+];
+
+export const DEFAULT_BUDGETS = {
+  food: 8000,
+  transport: 3000,
+  bills: 5000,
+  shopping: 4000
+};
+
+export const DEFAULT_SAVINGS_GOALS = [
+  {
+    id: 'goal_phone',
+    title: 'নতুন স্মার্টফোন (New Phone)',
+    targetAmount: 25000,
+    currentAmount: 14000,
+    targetDate: '2026-12-31',
+    color: '#10b981',
+    icon: 'Smartphone'
+  },
+  {
+    id: 'goal_emergency',
+    title: 'ইমার্জেন্সি সেভিংস ফান্ড',
+    targetAmount: 50000,
+    currentAmount: 22000,
+    targetDate: '2027-06-30',
+    color: '#6366f1',
+    icon: 'ShieldCheck'
+  }
+];
+
+export const DEFAULT_SUBSCRIPTIONS = [
+  {
+    id: 'sub_rent',
+    name: 'বাসা ভাড়া (House Rent)',
+    amount: 12000,
+    dueDay: 5,
+    category: 'Bills & Utilities',
+    wallet: 'bank',
+    lastPaidMonth: '2026-10'
+  },
+  {
+    id: 'sub_wifi',
+    name: 'ওয়াইফাই ইন্টারনেট বিল',
+    amount: 800,
+    dueDay: 10,
+    category: 'Bills & Utilities',
+    wallet: 'bkash',
+    lastPaidMonth: '2026-10'
+  },
+  {
+    id: 'sub_electric',
+    name: 'বিদ্যুৎ বিল (Electricity)',
+    amount: 1500,
+    dueDay: 15,
+    category: 'Bills & Utilities',
+    wallet: 'nagad',
+    lastPaidMonth: '2026-10'
+  }
+];
 
 export const DEFAULT_EXPENSE_CATEGORIES = [
   { id: 'food', name: 'Food & Groceries', icon: 'Utensils', color: '#f97316' },
@@ -52,8 +116,21 @@ export const CashFlowProvider = ({ children }) => {
     income: DEFAULT_INCOME_CATEGORIES
   });
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [theme, setTheme] = useState(userProfile?.theme || 'dark');
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('cashflow_theme_global') || userProfile?.theme || 'dark';
+  });
   const [initialBalance, setInitialBalance] = useState(userProfile?.initialBalance || 0);
+  const [soundEnabled, setSoundEnabled] = useState(() => sounds.isEnabled());
+  const [wallets, setWallets] = useState(DEFAULT_WALLETS);
+  const [walletInitialBalances, setWalletInitialBalances] = useState({
+    cash: userProfile?.initialBalance || 0,
+    bkash: 0,
+    nagad: 0,
+    bank: 0
+  });
+  const [budgets, setBudgets] = useState(DEFAULT_BUDGETS);
+  const [savingsGoals, setSavingsGoals] = useState(DEFAULT_SAVINGS_GOALS);
+  const [subscriptions, setSubscriptions] = useState(DEFAULT_SUBSCRIPTIONS);
 
   // Helper to persist local cache
   const saveLocalCache = (key, data) => {
@@ -76,13 +153,17 @@ export const CashFlowProvider = ({ children }) => {
     }
   };
 
-  // Sync theme to document body
+  // Sync theme to document body and root
   useEffect(() => {
     if (theme === 'light') {
       document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
       document.body.classList.add('light');
+      document.body.classList.remove('dark');
     } else {
+      document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+      document.body.classList.add('dark');
       document.body.classList.remove('light');
     }
   }, [theme]);
@@ -90,6 +171,7 @@ export const CashFlowProvider = ({ children }) => {
   const toggleTheme = async () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
+    localStorage.setItem('cashflow_theme_global', nextTheme);
     saveLocalCache('theme', nextTheme);
     if (uid && !uid.includes('demo')) {
       try {
@@ -118,6 +200,10 @@ export const CashFlowProvider = ({ children }) => {
     const cachedEntries = loadLocalCache('shop_entries', []);
     const cachedContacts = loadLocalCache('contacts', []);
     const cachedInitBal = loadLocalCache('initialBalance', 0);
+    const cachedCategories = loadLocalCache('categories', {
+      expense: DEFAULT_EXPENSE_CATEGORIES,
+      income: DEFAULT_INCOME_CATEGORIES
+    });
 
     setTransactions(cachedTx);
     setLoans(cachedLoans);
@@ -125,6 +211,22 @@ export const CashFlowProvider = ({ children }) => {
     setShopEntries(cachedEntries);
     setContacts(cachedContacts);
     setInitialBalance(cachedInitBal);
+    setCategories(cachedCategories);
+
+    const cachedWalletsBal = loadLocalCache('wallet_initial_balances', {
+      cash: cachedInitBal || 0,
+      bkash: 0,
+      nagad: 0,
+      bank: 0
+    });
+    const cachedBudgets = loadLocalCache('budgets', DEFAULT_BUDGETS);
+    const cachedGoals = loadLocalCache('savings_goals', DEFAULT_SAVINGS_GOALS);
+    const cachedSubs = loadLocalCache('subscriptions', DEFAULT_SUBSCRIPTIONS);
+
+    setWalletInitialBalances(cachedWalletsBal);
+    setBudgets(cachedBudgets);
+    setSavingsGoals(cachedGoals);
+    setSubscriptions(cachedSubs);
 
     // Auto-seed demo data if freshly logged in demo user
     if (cachedTx.length === 0 && uid.includes('demo') && !localStorage.getItem('cashflow_seeded_' + uid)) {
@@ -234,15 +336,37 @@ export const CashFlowProvider = ({ children }) => {
     const todayStr = new Date().toISOString().split('T')[0];
     const currentMonthStr = todayStr.substring(0, 7);
 
+    // Multi-Wallet Balances
+    const walletBalances = {
+      cash: Number(walletInitialBalances.cash) || Number(initialBalance) || 0,
+      bkash: Number(walletInitialBalances.bkash) || 0,
+      nagad: Number(walletInitialBalances.nagad) || 0,
+      bank: Number(walletInitialBalances.bank) || 0,
+    };
+
+    // Category Spending Tracker for current month
+    const categorySpentThisMonth = {};
+
     transactions.forEach(tx => {
       const amt = Number(tx.amount) || 0;
+      const w = tx.wallet || 'cash';
       const txDateStr = (tx.date || '').split('T')[0];
       const txMonthStr = txDateStr.substring(0, 7);
+
+      // Handle Wallet Transfer
+      if (tx.subType === 'wallet_transfer') {
+        const fromW = tx.fromWallet || 'cash';
+        const toW = tx.toWallet || 'bkash';
+        if (walletBalances[fromW] !== undefined) walletBalances[fromW] -= amt;
+        if (walletBalances[toW] !== undefined) walletBalances[toW] += amt;
+        return;
+      }
 
       if (tx.type === 'cash_in') {
         totalCashIn += amt;
         if (txDateStr === todayStr) todayIn += amt;
         if (txMonthStr === currentMonthStr) monthIn += amt;
+        if (walletBalances[w] !== undefined) walletBalances[w] += amt;
 
         if (tx.subType === 'real_income') {
           realIncome += amt;
@@ -257,6 +381,12 @@ export const CashFlowProvider = ({ children }) => {
         totalCashOut += amt;
         if (txDateStr === todayStr) todayOut += amt;
         if (txMonthStr === currentMonthStr) monthOut += amt;
+        if (walletBalances[w] !== undefined) walletBalances[w] -= amt;
+
+        if (txMonthStr === currentMonthStr) {
+          const cat = (tx.category || 'other').toLowerCase();
+          categorySpentThisMonth[cat] = (categorySpentThisMonth[cat] || 0) + amt;
+        }
 
         if (tx.subType === 'real_expense') {
           realExpenses += amt;
@@ -283,8 +413,12 @@ export const CashFlowProvider = ({ children }) => {
       const remaining = Number(loan.remainingAmount ?? loan.totalAmount) || 0;
       if (remaining > 0) {
         activeLoansCount++;
-        if (loan.dueDate && new Date(loan.dueDate) < now) {
-          overdueLoansCount++;
+        if (loan.dueDate) {
+          const dueEnd = new Date(loan.dueDate);
+          dueEnd.setHours(23, 59, 59, 999);
+          if (dueEnd < now) {
+            overdueLoansCount++;
+          }
         }
         if (loan.type === 'lent') {
           toReceiveLent += remaining;
@@ -305,7 +439,151 @@ export const CashFlowProvider = ({ children }) => {
       totalPaidToShops += Number(shop.totalPaid) || 0;
     });
 
-    const netCashInHand = (Number(initialBalance) || 0) + totalCashIn - totalCashOut;
+    // Net cash in hand = sum of all 4 wallets
+    const netCashInHand = walletBalances.cash + walletBalances.bkash + walletBalances.nagad + walletBalances.bank;
+
+    // Category Budgets Status
+    const categoryBudgetsStatus = Object.entries(budgets).map(([catId, limit]) => {
+      const catObj = categories.expense.find(c => c.id === catId || c.name.toLowerCase().includes(catId));
+      const catName = catObj ? catObj.name : catId;
+      let spent = 0;
+      Object.keys(categorySpentThisMonth).forEach(k => {
+        if (k.includes(catId) || catName.toLowerCase().includes(k)) {
+          spent += categorySpentThisMonth[k];
+        }
+      });
+      const numLimit = Number(limit) || 0;
+      const percent = numLimit > 0 ? Math.round((spent / numLimit) * 100) : 0;
+      let status = 'ok';
+      if (percent >= 100) status = 'danger';
+      else if (percent >= 75) status = 'warning';
+
+      return {
+        categoryId: catId,
+        name: catName,
+        limit: numLimit,
+        spent,
+        remaining: Math.max(0, numLimit - spent),
+        percent,
+        status
+      };
+    });
+
+    // Intelligent Dashboard Reminders Engine
+    const dashboardReminders = [];
+    const currentDay = now.getDate();
+
+    // 1. Recurring Subscriptions / Bills
+    subscriptions.forEach(sub => {
+      const isPaidThisMonth = sub.lastPaidMonth === currentMonthStr;
+      if (!isPaidThisMonth) {
+        const diff = sub.dueDay - currentDay;
+        if (diff === 0) {
+          dashboardReminders.push({
+            id: `sub_${sub.id}`,
+            subId: sub.id,
+            type: 'bill_due_today',
+            title: `${sub.name} এর বিল দেওয়ার আজ শেষ দিন!`,
+            description: `৳${Number(sub.amount).toLocaleString()} পরিশোধ করতে হবে (${sub.wallet ? sub.wallet.toUpperCase() : 'CASH'})`,
+            amount: sub.amount,
+            wallet: sub.wallet,
+            actionType: 'pay_sub',
+            severity: 'critical',
+            badgeText: 'আজই পরিশোধ'
+          });
+        } else if (diff > 0 && diff <= 3) {
+          dashboardReminders.push({
+            id: `sub_${sub.id}`,
+            subId: sub.id,
+            type: 'bill_upcoming',
+            title: `${sub.name} বিলের সময় সন্নিকটে`,
+            description: `আগামী ${diff} দিনের মধ্যে ৳${Number(sub.amount).toLocaleString()} প্রস্তুত রাখুন।`,
+            amount: sub.amount,
+            wallet: sub.wallet,
+            actionType: 'pay_sub',
+            severity: 'warning',
+            badgeText: `${diff} দিন বাকি`
+          });
+        } else if (diff < 0) {
+          dashboardReminders.push({
+            id: `sub_${sub.id}`,
+            subId: sub.id,
+            type: 'bill_overdue',
+            title: `${sub.name} বিলের তারিখ পার হয়েছে!`,
+            description: `৳${Number(sub.amount).toLocaleString()} বকেয়া পড়েছে। অনুগ্রহ করে দ্রুত পরিশোধ করুন।`,
+            amount: sub.amount,
+            wallet: sub.wallet,
+            actionType: 'pay_sub',
+            severity: 'danger',
+            badgeText: 'তারিখ অতিক্রান্ত'
+          });
+        }
+      }
+    });
+
+    // 2. Budget Alerts
+    categoryBudgetsStatus.forEach(b => {
+      if (b.status === 'danger') {
+        dashboardReminders.push({
+          id: `b_${b.categoryId}`,
+          type: 'budget_danger',
+          title: `${b.name} এর বাজেট ১০০% অতিক্রম করেছে!`,
+          description: `বাজেট ছিল ৳${b.limit.toLocaleString()}, খরচ হয়েছে ৳${b.spent.toLocaleString()} (${b.percent}%)`,
+          severity: 'danger',
+          badgeText: 'বাজেট অতিরিক্ত'
+        });
+      } else if (b.status === 'warning') {
+        dashboardReminders.push({
+          id: `b_${b.categoryId}`,
+          type: 'budget_warning',
+          title: `${b.name} বাজেটের ${b.percent}% খরচ সম্পন্ন`,
+          description: `বাজেট ৳${b.limit.toLocaleString()}, আর মাত্র ৳${b.remaining.toLocaleString()} বাকি আছে।`,
+          severity: 'warning',
+          badgeText: `${b.percent}% ব্যবহৃত`
+        });
+      }
+    });
+
+    // 3. Overdue Loans
+    loans.forEach(l => {
+      const rem = Number(l.remainingAmount ?? l.totalAmount) || 0;
+      if (rem > 0 && l.dueDate) {
+        const due = new Date(l.dueDate);
+        due.setHours(23, 59, 59, 999);
+        if (due < now) {
+          dashboardReminders.push({
+            id: `loan_${l.id}`,
+            type: 'loan_overdue',
+            title: `${l.type === 'borrowed' ? 'ধার পরিশোধের' : 'ধার আদায়ের'} তারিখ অতিক্রান্ত!`,
+            description: `${l.personName} এর সাথে ৳${rem.toLocaleString()} লেনদেন (${l.note || 'লোন'})`,
+            severity: 'danger',
+            badgeText: 'লোন ওভারডিউ'
+          });
+        }
+      }
+    });
+
+    // 4. Daily Cash Closing Reminder
+    const todayDateStr = now.toISOString().split('T')[0];
+    let lastClosingDate = null;
+    try {
+      lastClosingDate = localStorage.getItem('cashflow_last_closing_date');
+    } catch (e) {}
+
+    const hasTodayTransactions = (todayIn > 0 || todayOut > 0);
+    const isEvening = now.getHours() >= 18;
+
+    if (lastClosingDate !== todayDateStr && (isEvening || hasTodayTransactions)) {
+      dashboardReminders.push({
+        id: 'reminder_daily_closing',
+        type: 'daily_closing_due',
+        title: 'দিন শেষের ক্যাশ হিসাব মেলানো বাকি আছে! 🌙',
+        description: `ড্রয়ারের নগদ টাকা গুনে সিস্টেমের হিসাবের সাথে মিলিয়ে ক্যাশ ড্রয়ার ক্লোজ করুন।`,
+        actionType: 'open_closing',
+        severity: isEvening ? 'warning' : 'info',
+        badgeText: 'ক্যাশ ক্লোজিং'
+      });
+    }
 
     return {
       initialBalance: Number(initialBalance) || 0,
@@ -329,9 +607,12 @@ export const CashFlowProvider = ({ children }) => {
       totalShopCreditBought,
       totalPaidToShops,
       registeredShopsCount: shops.length,
-      netCashInHand
+      netCashInHand,
+      walletBalances,
+      categoryBudgetsStatus,
+      dashboardReminders
     };
-  }, [transactions, loans, shops, initialBalance]);
+  }, [transactions, loans, shops, initialBalance, walletInitialBalances, budgets, subscriptions, savingsGoals, categories]);
 
   // Action: Add Transaction
   const addTransaction = async (data) => {
@@ -339,10 +620,17 @@ export const CashFlowProvider = ({ children }) => {
     const newTx = {
       id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       ...data,
+      wallet: data.wallet || 'cash',
       amount: Number(data.amount),
       date: data.date || new Date().toISOString(),
       createdAt: new Date().toISOString()
     };
+
+    if (newTx.type === 'cash_in') {
+      sounds.playCashIn();
+    } else {
+      sounds.playCashOut();
+    }
 
     // Optimistic local update
     const updated = [newTx, ...transactions];
@@ -362,6 +650,7 @@ export const CashFlowProvider = ({ children }) => {
   // Action: Delete Transaction
   const deleteTransaction = async (txId) => {
     if (!uid) return;
+    sounds.playCashOut();
     const updated = transactions.filter(t => t.id !== txId);
     setTransactions(updated);
     saveLocalCache('transactions', updated);
@@ -371,6 +660,145 @@ export const CashFlowProvider = ({ children }) => {
     } catch (e) {
       console.warn('Firestore deleteTx:', e);
     }
+  };
+
+  // Action: Toggle Sound
+  const toggleSound = () => {
+    const next = sounds.toggle();
+    setSoundEnabled(next);
+    return next;
+  };
+
+  // Action: Wallet Transfer
+  const transferWallet = async ({ fromWallet, toWallet, amount, note }) => {
+    if (!uid) return;
+    const numAmt = Number(amount);
+    if (numAmt <= 0) return;
+    sounds.playClick();
+    const tx = {
+      type: 'cash_out',
+      subType: 'wallet_transfer',
+      fromWallet,
+      toWallet,
+      category: 'Wallet Transfer',
+      amount: numAmt,
+      note: note || `Transfer: ${fromWallet.toUpperCase()} ➔ ${toWallet.toUpperCase()}`,
+      date: new Date().toISOString()
+    };
+    await addTransaction(tx);
+  };
+
+  // Action: Update Wallet Initial Balances
+  const updateWalletInitialBalances = (newBalances) => {
+    setWalletInitialBalances(newBalances);
+    saveLocalCache('wallet_initial_balances', newBalances);
+    sounds.playClick();
+  };
+
+  // Action: Set Category Budget
+  const setCategoryBudget = (categoryId, limit) => {
+    const updated = { ...budgets, [categoryId]: Number(limit) || 0 };
+    setBudgets(updated);
+    saveLocalCache('budgets', updated);
+    sounds.playClick();
+  };
+
+  // Action: Add Savings Goal
+  const addSavingsGoal = (goal) => {
+    const newGoal = {
+      id: `goal_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      ...goal,
+      targetAmount: Number(goal.targetAmount) || 0,
+      currentAmount: Number(goal.currentAmount) || 0,
+      createdAt: new Date().toISOString()
+    };
+    const updated = [...savingsGoals, newGoal];
+    setSavingsGoals(updated);
+    saveLocalCache('savings_goals', updated);
+    sounds.playCashIn();
+  };
+
+  // Action: Deposit to Savings Goal
+  const depositToSavingsGoal = async (goalId, amount, fromWallet = 'cash') => {
+    const numAmt = Number(amount);
+    if (numAmt <= 0) return;
+    const goal = savingsGoals.find(g => g.id === goalId);
+    const updated = savingsGoals.map(g => {
+      if (g.id === goalId) {
+        return { ...g, currentAmount: (Number(g.currentAmount) || 0) + numAmt };
+      }
+      return g;
+    });
+    setSavingsGoals(updated);
+    saveLocalCache('savings_goals', updated);
+
+    await addTransaction({
+      type: 'cash_out',
+      subType: 'real_expense',
+      wallet: fromWallet,
+      category: 'Savings & Investment',
+      amount: numAmt,
+      note: `Deposit to Goal: ${goal?.title || 'Savings Goal'}`
+    });
+    sounds.playCashIn();
+  };
+
+  // Action: Delete Savings Goal
+  const deleteSavingsGoal = (goalId) => {
+    const updated = savingsGoals.filter(g => g.id !== goalId);
+    setSavingsGoals(updated);
+    saveLocalCache('savings_goals', updated);
+    sounds.playClick();
+  };
+
+  // Action: Add Subscription
+  const addSubscription = (sub) => {
+    const newSub = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      ...sub,
+      amount: Number(sub.amount) || 0,
+      dueDay: Number(sub.dueDay) || 1,
+      createdAt: new Date().toISOString()
+    };
+    const updated = [...subscriptions, newSub];
+    setSubscriptions(updated);
+    saveLocalCache('subscriptions', updated);
+    sounds.playClick();
+  };
+
+  // Action: Pay Monthly Subscription
+  const paySubscription = async (subId, paymentWallet) => {
+    const sub = subscriptions.find(s => s.id === subId);
+    if (!sub) return;
+
+    const currentMonthStr = new Date().toISOString().substring(0, 7);
+    const updated = subscriptions.map(s => {
+      if (s.id === subId) {
+        return { ...s, lastPaidMonth: currentMonthStr };
+      }
+      return s;
+    });
+    setSubscriptions(updated);
+    saveLocalCache('subscriptions', updated);
+
+    const w = paymentWallet || sub.wallet || 'cash';
+    await addTransaction({
+      type: 'cash_out',
+      subType: 'real_expense',
+      wallet: w,
+      category: sub.category || 'Bills & Utilities',
+      amount: sub.amount,
+      note: `Monthly Bill Paid: ${sub.name} (${currentMonthStr})`
+    });
+    sounds.playCashOut();
+  };
+
+  // Action: Delete Subscription
+  const deleteSubscription = (subId) => {
+    const updated = subscriptions.filter(s => s.id !== subId);
+    setSubscriptions(updated);
+    saveLocalCache('subscriptions', updated);
+    sounds.playClick();
   };
 
   // Action: Update Initial Balance
@@ -678,10 +1106,14 @@ export const CashFlowProvider = ({ children }) => {
 
   // Action: Add Category
   const addCategory = (type, category) => {
-    setCategories(prev => ({
-      ...prev,
-      [type]: [...prev[type], { ...category, id: `cat_${Date.now()}` }]
-    }));
+    setCategories(prev => {
+      const updated = {
+        ...prev,
+        [type]: [...prev[type], { ...category, id: `cat_${Date.now()}` }]
+      };
+      saveLocalCache('categories', updated);
+      return updated;
+    });
   };
 
   // Action: Load Sample Demo Data (বাস্তবসম্মত বাংলাদেশি ডেমো ডাটা)
@@ -892,7 +1324,28 @@ export const CashFlowProvider = ({ children }) => {
     loadSampleDemoData,
     clearAllData,
     exportBackupJSON,
-    importBackupJSON
+    importBackupJSON,
+    // Multi-Wallet
+    wallets,
+    walletInitialBalances,
+    updateWalletInitialBalances,
+    transferWallet,
+    // Category Budgets
+    budgets,
+    setCategoryBudget,
+    // Savings Goals
+    savingsGoals,
+    addSavingsGoal,
+    depositToSavingsGoal,
+    deleteSavingsGoal,
+    // Subscriptions & Recurring Bills
+    subscriptions,
+    addSubscription,
+    paySubscription,
+    deleteSubscription,
+    // Sound Effects
+    soundEnabled,
+    toggleSound
   };
 
   return (
